@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        body {
+            position: relative;
+        }
+        #logout-btn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background-color: #e63946;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #logout-btn:hover {
+            background-color: #c0392b;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+        #retry-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #retry-btn:hover {
+            background-color: #4a56a6;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="logout-btn" onclick="logout()">Logout</button>
+
+    <div class="container">
+        <h1 id="quiz-header">Quiz Time!</h1>
+        <div id="quiz-container"></div>
+        <button id="submit-btn">Submit</button>
+        <h2 id="final-score" style="display: none;"></h2>
+        <button id="retry-btn" onclick="retryQuiz()">Retry Quiz</button>
+    </div>
+
+    <script>
+        let currentQuestionIndex = 0;
+        let correctAnswers = 0;
+        let questions = [];
+
+        // ✅ Check Authentication Before Loading Quiz
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("You must log in first!");
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/questions");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                questions = await response.json();
+                showQuestion();
+            } catch (error) {
+                console.error("Error fetching quiz questions:", error);
+                document.getElementById('quiz-container').innerHTML = '<h2>Error loading quiz. Try again later.</h2>';
+            }
+        });
+
+        function showQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                document.getElementById('quiz-container').innerHTML = '<h2>Quiz Over!</h2>';
+                document.getElementById('submit-btn').style.display = 'none';
+                document.getElementById('final-score').style.display = 'block';
+                document.getElementById('final-score').innerText = `Your final score is: ${correctAnswers} out of ${questions.length}`;
+                document.getElementById('quiz-header').style.display = 'none';
+                document.getElementById('retry-btn').style.display = 'block';
+                return;
+            }
+
+            const question = questions[currentQuestionIndex];
+            const questionHTML = `
+                <h2>${question.question}</h2>
+                <ul>
+                    ${question.options.map(option => `
+                        <li>
+                            <input type="radio" name="answer" value="${option}">
+                            <label>${option}</label>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            document.getElementById('quiz-container').innerHTML = questionHTML;
+        }
+
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            const selectedOption = document.querySelector('input[name="answer"]:checked');
+            
+            if (!selectedOption) {
+                alert("Please select an answer!");
+                return;
+            }
+
+            const selectedAnswer = selectedOption.value;
+            const correctAnswer = questions[currentQuestionIndex].correctAnswer;
+
+            if (selectedAnswer === correctAnswer) {
+                correctAnswers++;
+            }
+
+            currentQuestionIndex++;
+            showQuestion();
+        });
+
+        function retryQuiz() {
+            currentQuestionIndex = 0;
+            correctAnswers = 0;
+            document.getElementById('quiz-header').style.display = 'block';
+            document.getElementById('submit-btn').style.display = 'block';
+            document.getElementById('final-score').style.display = 'none';
+            document.getElementById('retry-btn').style.display = 'none';
+            showQuestion();
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

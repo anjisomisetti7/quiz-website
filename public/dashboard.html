@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="dashboard" style="display: none;">
+        <h1>Welcome to your Dashboard</h1>
+        <button onclick="startQuiz()">Start Quiz</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+    
+    <p id="loading-message">Checking authentication...</p>
+
+    <script>
+        // Check if user is authenticated
+        document.addEventListener("DOMContentLoaded", () => {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                // Redirect to login if no token found
+                window.location.href = "login.html";
+            } else {
+                // Hide loading message and show dashboard
+                document.getElementById("loading-message").style.display = "none";
+                document.getElementById("dashboard").style.display = "block";
+            }
+        });
+
+        function startQuiz() {
+            window.location.href = "quiz.html";  // Redirect to quiz page
+        }
+
+        function logout() {
+            localStorage.removeItem("token");  // Clear token from localStorage
+            window.location.href = "login.html";  // Redirect to login page
+        }
+    </script>
+</body>
+</html>
